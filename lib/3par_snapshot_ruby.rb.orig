@@ -1,0 +1,55 @@
+class LVM
+  attr_accessor :fstab, :src, :dst
+  def initialize
+    self.fstab = '/etc/fstab'
+  end
+  def src(source)
+    self.src = source
+  end
+  def dst(destination)
+    self.dst = destination
+  end
+  def src_mounts(source)
+    File.open(self.fstab, "r") do |f|
+      f.each do |line|
+        if match = line.match(/(\/pkg\/#{source}\/u.+?)\s+/)
+          (@src_mounts ||= []).push(match.captures)
+        end
+      end
+    end
+    @src_mounts 
+  end
+  def dst_mounts(destination)
+    File.open(self.fstab, "r") do |f|
+      f.each do |line|
+        if match = line.match(/(\/pkg\/#{destination}\/u.+?)\s+/)
+          (@dst_mounts ||= []).push(match.captures)
+        end
+      end
+    end
+    @dst_mounts 
+  end
+  def dst_vgs(destination)
+    File.open(self.fstab, "r") do |f|
+      f.each do |line|
+        if match = line.match(/\/dev\/(.+)\/lvol.+?\s+\/pkg\/#{destination}\/u.+?\s+/)
+          (@dst_vgs ||= []).push(match.captures)
+        end
+      end
+    end
+    @dst_vgs.uniq
+  end
+  def dm_vgs(dst_vgs)
+    dmsetup = "/sbin/dmsetup"
+    dst_vgs.each do |vg|
+      #puts vg
+      dmsetup_out = %x(#{dmsetup} info)
+      @dm_vgs = dmsetup_out.scan(/Name:\s+(.+_#{vg}_.+)/)
+      puts @dm_vgs
+      #dmseup_out.each do line
+      #  puts line
+      #end
+    end
+    @dm_vgs
+  end
+end
