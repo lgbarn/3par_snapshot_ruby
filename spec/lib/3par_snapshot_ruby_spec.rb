@@ -1,9 +1,9 @@
 require "spec_helper"
 require "3par_snapshot_ruby"
 
-describe LVM do
+describe Snapshot do
   before(:all) do
-      @lvm = LVM.new
+      @lvm = Snapshot.new
   end
   context "when performing snapshot" do
     describe "#initialize" do
@@ -33,6 +33,11 @@ describe LVM do
         expect(@lvm.dst_mounts("newtest")).to eq [["/pkg/newtest/u01"], ["/pkg/newtest/u02"], ["/pkg/newtest/u03"], ["/pkg/newtest/u04"], ["/pkg/newtest/u05"], ["/pkg/newtest/u06"]]
       end
     end
+    describe "#dst_busy_mounts" do
+      it "returns busy destination mount points" do
+        expect(@lvm.dst_busy_mounts("newtest")).to eq [["/pkg/newtest/u01"], ["/pkg/newtest/u02"], ["/pkg/newtest/u03"], ["/pkg/newtest/u04"], ["/pkg/newtest/u05"], ["/pkg/newtest/u06"]]
+      end
+    end
     describe "#dst_vgs" do
       it "returns destination volume groups" do
         expect(@lvm.dst_vgs("newtest")).to eq [["vg600"], ["vg601"]]
@@ -50,6 +55,11 @@ describe LVM do
       it "returns dm lvols" do
         @dst_vgs = @lvm.dst_vgs("newtest")
         expect(@lvm.dm_dst_lvols(@dst_vgs)).to eq ["vg600-lvol2", "vg600-lvol1", "vg600-lvol0", "vg601-lvol2", "vg601-lvol1", "vg601-lvol0"]
+      end
+    end
+    describe "#device" do
+      it "sets device_file" do
+        expect(@lvm.device("newtest_vg601_d001")).to eq "newtest_vg601_d001"
       end
     end
   end

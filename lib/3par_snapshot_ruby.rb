@@ -1,8 +1,10 @@
-class LVM
-  attr_accessor :fstab, :dmsetup, :src, :dst
+class Snapshot
+  attr_accessor :fstab, :proc_mounts, :dmsetup, :src, :dst, :device_file
   def initialize
     self.fstab = '/etc/fstab'
+    self.proc_mounts = '/proc/mounts'
     self.dmsetup = "/sbin/dmsetup"
+#    self.multipath_cmd = "/sbin/multipath"
   end
   def src(source)
     self.src = source
@@ -30,6 +32,16 @@ class LVM
     end
     @dst_mounts 
   end
+  def dst_busy_mounts(destination)
+    File.open(self.proc_mounts, "r") do |f|
+      f.each do |line|
+        if match = line.match(/(\/pkg\/#{destination}\/u.+?)\s+/)
+          (@dst_busy_mounts ||= []).push(match.captures)
+        end
+      end
+    end
+    @dst_busy_mounts
+  end
   def dst_vgs(destination)
     File.open(self.fstab, "r") do |f|
       f.each do |line|
@@ -54,4 +66,9 @@ class LVM
     end
     @dm_dst_lvols.flatten
   end
+  def device(device_file)
+    self.device_file = device_file
+  end
 end
+
+
