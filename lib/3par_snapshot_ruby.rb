@@ -1,10 +1,10 @@
 class Snapshot
-  attr_accessor :fstab, :proc_mounts, :dmsetup, :src, :dst, :device_file
+  attr_accessor :fstab, :proc_mounts, :dmsetup, :src, :dst, :device_file, :multipath_cmd
   def initialize
     self.fstab = '/etc/fstab'
     self.proc_mounts = '/proc/mounts'
     self.dmsetup = "/sbin/dmsetup"
-#    self.multipath_cmd = "/sbin/multipath"
+    self.multipath_cmd = "/sbin/multipath"
   end
   def src(source)
     self.src = source
@@ -69,6 +69,17 @@ class Snapshot
   def device(device_file)
     self.device_file = device_file
   end
+  def get_paths(device_file)
+    self.device_file = device_file
+    @cmd_output = %x(#{self.multipath_cmd} -l #{self.device_file})
+    @cmd_output.each do |line|
+      if match = line.match(/(\d+:\d+:\d+:\d+)\s+(\w+)\s+/)
+        (@paths ||= []).push(match.captures)
+      end
+    end
+    @paths
+  end
+
 end
 
 

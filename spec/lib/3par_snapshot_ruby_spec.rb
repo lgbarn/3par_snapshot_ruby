@@ -62,5 +62,11 @@ describe Snapshot do
         expect(@lvm.device("newtest_vg601_d001")).to eq "newtest_vg601_d001"
       end
     end
+    describe "#get_paths" do
+      it "parses @cmd_output and and gets individual paths" do
+        expect(@lvm.get_paths("newtest_vg601_d001")).to eq [["1:0:0:5", "sdg"], ["1:0:1:5", "sdr"], ["2:0:0:5", "sdac"], ["2:0:1:5", "sdan"]]
+      end
+    end
+
   end
 end
