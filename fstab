@@ -1,0 +1,33 @@
+
+#
+# /etc/fstab
+# Created by anaconda on Thu May 23 10:16:26 2013
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+UUID=49394570-ef95-4be4-86b2-00b1c5533f3f /                       ext4    defaults        1 1
+UUID=7aff36bb-cf65-43e2-a054-c61791908f5d /opt                    ext4    defaults        1 2
+UUID=7d098f61-b8d7-4569-8f1f-acf2fe022830 /tmp                    ext4    defaults        1 2
+UUID=c71961e4-be11-41cb-b801-d9e40ddd51f8 /usr                    ext4    defaults        1 2
+UUID=4378bed0-829e-4258-a37f-e8a6a74e7452 /var                    ext4    defaults        1 2
+UUID=904d40b5-ab57-4eb3-9720-ca56913cf03c swap                    swap    defaults        0 0
+tmpfs                   /dev/shm                tmpfs   defaults        0 0
+devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
+sysfs                   /sys                    sysfs   defaults        0 0
+proc                    /proc                   proc    defaults        0 0
+/dev/sdah /tmp_mnt  auto noauto,owner,kuzu 0 0
+/dev/gfstest/lvol0 /dev/gfstest                    gfs2    defaults        0 0
+/dev/vg500/lvol0        /pkg/test/u01           ext4    defaults        1 0
+/dev/vg500/lvol1        /pkg/test/u02           ext4    defaults        1 0
+/dev/vg500/lvol2        /pkg/test/u03           ext4    defaults        1 0
+/dev/vg501/lvol0        /pkg/test/u04           ext4    defaults        1 0
+/dev/vg501/lvol1        /pkg/test/u05           ext4    defaults        1 0
+/dev/vg501/lvol2        /pkg/test/u06           ext4    defaults        1 0
+/dev/vg600/lvol0        /pkg/newtest/u01           ext4    defaults        1 0
+/dev/vg600/lvol1        /pkg/newtest/u02           ext4    defaults        1 0
+/dev/vg600/lvol2        /pkg/newtest/u03           ext4    defaults        1 0
+/dev/vg601/lvol0        /pkg/newtest/u04           ext4    defaults        1 0
+/dev/vg601/lvol1        /pkg/newtest/u05           ext4    defaults        1 0
+/dev/vg601/lvol2        /pkg/newtest/u06           ext4    defaults        1 0
+
