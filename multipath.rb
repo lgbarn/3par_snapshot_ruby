@@ -17,7 +17,8 @@ class Multipath
     @pkg_dm_lvols = []
     @p_vgs.each do |vg|
       @dmsetup.each_line do |line|
-        @pkg_dm_lvols << $1 if /(#{vg}-lvol.+?)\s+/ =~ line
+        match = /(?<dm_lvol>#{vg}-lvol.+?)\s+/.match(line)
+        @pkg_dm_lvols << match[:dm_lvol] if match
       end
     end
     @pkg_dm_lvols
@@ -27,7 +28,8 @@ class Multipath
     @pkg_dm_disks = []
     @p_disks.each do |disk|
       @dmsetup.each_line do |line|
-        @pkg_dm_disks << dm_disk if /(?<dm_disk>#{disk})\s+/ =~ line
+        match = /(?<dm_disk>#{disk})\s+/.match(line)
+        @pkg_dm_disks << match[:dm_disk] if match
       end
     end
     @pkg_dm_disks

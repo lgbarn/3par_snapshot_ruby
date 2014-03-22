@@ -5,14 +5,13 @@ class LVM
     f = File.open(filename, 'r')
     @newfile = []
     f.each_line do |line|
-      clean_line = line.gsub(/#.*/, "")
-      if clean_line =~ /filter.*=/
-        @newfile << line.gsub(/filter.*=.*$/, @filter)
-      else
-        @newfile << line
+      clean_line = line.gsub(/#.*$/, '')
+      if clean_line =~ /filter\s+=/
+        line.gsub!(/filter.*$/, @filter)
       end
+      @newfile << line.chomp
     end
-    f = File.open(filename, 'w') { |file| file << @newfile }
+    File.open(filename, 'w') { |f| f.write(@newfile.join("\n")) }
   end
 end
 
