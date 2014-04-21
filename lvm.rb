@@ -1,8 +1,8 @@
 class LVM
   def set_filter(args={})
     @filter = args[:filter]
-    filename = "/home/lgbarn/3par_snapshot_ruby/lvm.conf"
-    f = File.open(filename, 'r')
+    @file = args[:file]
+    f = File.open(@file, 'r')
     @newfile = []
     f.each_line do |line|
       clean_line = line.gsub(/#.*$/, '')
@@ -11,7 +11,7 @@ class LVM
       end
       @newfile << line.chomp
     end
-    File.open(filename, 'w') { |f| f.write(@newfile.join("\n")) }
+    File.open(@file, 'w') { |f| f.write(@newfile.join("\n")) }
   end
 end
 

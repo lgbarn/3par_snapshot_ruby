@@ -5,7 +5,7 @@ require './filesystem'
 require './snapshots'
 require './multipath'
 require './threepar'
-require '/home/lgbarn/3par_snapshot_ruby/lvm'
+require './lvm'
 
 # Read all options from command line
 options = {}
@@ -61,67 +61,115 @@ if options[:disable]
 
   # Unmount filesystems
   fstab.mounted.each do |fs|
-    #cmd_logger(:cmd => "/sbin/fuser -km #{fs}", :logfile => 'mylog')
-    #cmd_logger(:cmd => "/bin/umount #{fs}", :logfile => 'mylog')
-    puts "/sbin/fuser -km #{fs}"
-    puts "/bin/umount #{fs}"
+    cmd_logger(:cmd => "/sbin/fuser -km #{fs}", :logfile => 'mylog')
+    cmd_logger(:cmd => "/bin/umount #{fs}", :logfile => 'mylog')
+    #puts "/sbin/fuser -km #{fs}"
+    #puts "/bin/umount #{fs}"
   end
 
   # vgchange and remove volumegroups
   snap.pkg_vgs.each do |vg|
-    puts "/sbin/vgchange -a n #{vg}"
-    puts "/sbin/vgremove -ff #{vg}"
+    cmd_logger(:cmd => "/sbin/vgchange -a n #{vg}", :logfile => 'mylog')
+    cmd_logger(:cmd => "sleep 5\n", :logfile => 'mylog')
+    cmd_logger(:cmd => "/sbin/vgremove -ff #{vg}", :logfile => 'mylog')
+    cmd_logger(:cmd => "sleep 5\n", :logfile => 'mylog')
   end
 
   # ensure cleanup using dmsetup
   mp.pkg_dm_lvols.each do |lvol|
-    puts "dmsetup remove #{lvol}"
+    cmd_logger(:cmd => "dmsetup remove #{lvol}", :logfile => 'mylog')
   end
 
   # Flush and remove devices from system
   snap.pkg_disks.each do |disk|
     `/sbin/multipath -l #{disk}`.each_line do |line|
       if /(?<scsi_device>\d+:\d+:\d+:\d+)\s+(?<blockdev>\w+)\s+/ =~ line
-        puts "blockdev --flushbufs /dev/#{blockdev}"
-        puts "echo 1 > /sys/class/scsi_device/#{scsi_device}/device/delete"
+        cmd_logger(:cmd => "blockdev --flushbufs /dev/#{blockdev}", :logfile => 'mylog')
+        cmd_logger(:cmd => "sleep 2\n", :logfile => 'mylog')
+        cmd_logger(:cmd => "echo 1 > /sys/class/scsi_device/#{scsi_device}/device/delete", :logfile => 'mylog')
+        cmd_logger(:cmd => "sleep 2\n", :logfile => 'mylog')
       end
     end
-    puts "/sbin/multipath -f #{disk}"
+    cmd_logger(:cmd => "/sbin/multipath -f #{disk}", :logfile => 'mylog')
+    cmd_logger(:cmd => "sleep 2\n", :logfile => 'mylog')
   end
 
   # remove 3par vlun from server
   snap.pkg_disks.each do |disk|
     server = `hostname -s`
-    @lund_id = array.get_lun_id(disk)
-    puts "cli removevlun -f  #{disk} #{@lun_id} #{server}"
+    @lun_id = array.get_lun_id(disk)
+    cmd_logger(:cmd => "cli removevlun -f  #{disk} #{@lun_id} #{server}", :logfile => 'mylog')
+    cmd_logger(:cmd => "sleep 5\n", :logfile => 'mylog')
   end
 
   # remove all snapshots related to current job
-  @removevv_list = snap.ro_rw_pairs.join(' ').gsub(/:/, ' ')
-  puts "cli removevv -f -snaponly -cascade #{@removevv_list}"
+  #@removevv_list = snap.ro_rw_pairs.join(' ').gsub(/:/, ' ')
+  @removevv_list = snap.rw_snap_disks.join(' ').gsub(/:/, ' ') ### Test lgb ###
+  cmd_logger(:cmd => "cli removevv -f -snaponly -cascade #{@removevv_list}", :logfile => 'mylog')
+  cmd_logger(:cmd => "sleep 5\n", :logfile => 'mylog')
 
-  # create read-only snapshots
-  @ro_snapshot_list = snap.src_ro_pairs.join(' ')
-  puts "cli creategroupsv -ro #{@ro_snapshot_list}"
 end
+
+cmd_logger(:cmd => "rescan-scsi-bus.sh -l\n", :logfile => 'mylog')
+cmd_logger(:cmd => "sleep 15\n", :logfile => 'mylog')
+cmd_logger(:cmd => "multipath -F\n", :logfile => 'mylog')
+cmd_logger(:cmd => "sleep 15\n", :logfile => 'mylog')
+cmd_logger(:cmd => "multipathd -r\n", :logfile => 'mylog')
+cmd_logger(:cmd => "sleep 15\n", :logfile => 'mylog')
+cmd_logger(:cmd => "multipath -F\n", :logfile => 'mylog')
+cmd_logger(:cmd => "sleep 15\n", :logfile => 'mylog')
+cmd_logger(:cmd => "multipath -v2\n", :logfile => 'mylog')
+cmd_logger(:cmd => "sleep 15\n", :logfile => 'mylog')
+
 
 if options[:enable]
   puts 'enabled '
 
+  # create read-only snapshots
+  @ro_snapshot_list = snap.src_ro_pairs.join(' ')
+  cmd_logger(:cmd => "cli creategroupsv -ro #{@ro_snapshot_list}", :logfile => 'mylog')
+  cmd_logger(:cmd => "sleep 5\n", :logfile => 'mylog')
+
   # create read-write snapshots
   @rw_snapshot_list = snap.ro_rw_pairs.join(' ')
-  puts "cli creategroupsv #{@rw_snapshot_list}"
+  cmd_logger(:cmd => "cli creategroupsv #{@rw_snapshot_list}", :logfile => 'mylog')
+  cmd_logger(:cmd => "sleep 5\n", :logfile => 'mylog')
+
+#  # create read-write snapshots
+#  @rw_snapshot_list = snap.src_rw_pairs.join(' ')
+#  cmd_logger(:cmd => "cli creategroupsv #{@rw_snapshot_list}", :logfile => 'mylog')
+#  cmd_logger(:cmd => "sleep 5\n", :logfile => 'mylog')
 
   # set wwid and create vlun to server
   snap.pkg_disks.each do |disk|
     server = `hostname -s`
     @wwid = mp.get_3par_wwid(disk)
-    puts "cli setvv -wwn #{@wwid} #{disk}"
-    puts "cli createvlun #{disk} auto #{server}"
+    cmd_logger(:cmd => "cli setvv -wwn #{@wwid} #{disk}", :logfile => 'mylog')
+    cmd_logger(:cmd => "cli createvlun #{disk} auto #{server}", :logfile => 'mylog')
+    cmd_logger(:cmd => "sleep 5\n", :logfile => 'mylog')
   end
 
   # set filter in /etc/lvm/lvm.conf and import vgs
   #lvm.set_filter(filter: mp.get_snap_filter(snap.pkg_disks))
+  lvm.set_filter(filter: mp.get_filter, file: '/etc/lvm/lvm.conf')
+
+###########
+  cmd_logger(:cmd => "sleep 15\n", :logfile => 'mylog')
+  cmd_logger(:cmd => "rescan-scsi-bus.sh -l\n", :logfile => 'mylog')
+  cmd_logger(:cmd => "sleep 15\n", :logfile => 'mylog')
+  cmd_logger(:cmd => "multipath -F\n", :logfile => 'mylog')
+  cmd_logger(:cmd => "sleep 15\n", :logfile => 'mylog')
+  cmd_logger(:cmd => "multipathd -r\n", :logfile => 'mylog')
+  cmd_logger(:cmd => "sleep 15\n", :logfile => 'mylog')
+  cmd_logger(:cmd => "multipath -F\n", :logfile => 'mylog')
+  cmd_logger(:cmd => "sleep 15\n", :logfile => 'mylog')
+  cmd_logger(:cmd => "multipath -v2\n", :logfile => 'mylog')
+  cmd_logger(:cmd => "sleep 15\n", :logfile => 'mylog')
+###########
+  cmd_logger(:cmd => "mkdir /tmp/lvmtemp\n", :logfile => 'mylog')
+  cmd_logger(:cmd => "cp -f /etc/lvm/lvm.conf /tmp/lvmtemp/\n", :logfile => 'mylog')
+  ENV['LVM_SYSTEM_DIR']='/tmp/lvmtemp/'
+  lvm.set_filter(filter: mp.get_snap_filter(snap.pkg_disks), file: '/tmp/lvmtemp/lvm.conf')
   @vg_map = {}
   snap.pkg_vgs.each do |vg|
     @clone_disks = []
@@ -130,22 +178,22 @@ if options[:enable]
         @clone_disks << "/dev/mapper/#{disk}"
       end
     end
-    puts "vgimportclone --basevgname #{vg} #{@clone_disks.join(" ")}"
+    cmd_logger(:cmd => "vgimportclone --basevgname #{vg} #{@clone_disks.join(" ")}", :logfile => 'mylog')
   end
 
   # set final filter
-  #lvm.set_filter(filter: mp.get_filter)
+  ENV['LVM_SYSTEM_DIR']=nil
+  lvm.set_filter(filter: mp.get_filter, file: '/etc/lvm/lvm.conf')
 
   # perform vgchange and backup
   snap.pkg_vgs.each do |vg|
-    puts "vgchange -a y #{vg}"
-    puts "vgcfgbackup #{vg}"
+    cmd_logger(:cmd => "vgchange -a y #{vg}", :logfile => 'mylog')
+    cmd_logger(:cmd => "vgcfgbackup #{vg}", :logfile => 'mylog')
   end
 
   # mount filesystems
   fstab.mounts.each do |mount|
-    #cmd_logger(:cmd => "mount #{mount}", :logfile => 'mylog')
-    puts "mount #{mount}"
+    cmd_logger(:cmd => "mount #{mount}", :logfile => 'mylog')
   end
 
 end

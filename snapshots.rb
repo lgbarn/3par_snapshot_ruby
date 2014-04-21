@@ -52,9 +52,21 @@ class Snapshots
     disks = []
     f = File.open('/etc/snapshots.conf', 'r')
     f.each_line do |line|
-      if /disk:(?<src_disk>#{@source}_vg.+_.*):(?<dst_disk>#{@package}_vg.+_.*)/ =~ line
-        curr_ro_pair = "#{src_disk.chomp}:#{dst_disk.chomp}"
+      if /disk:(#{@source}_vg.+_.*):(#{@package}_vg.+_.*)/ =~ line
+        curr_ro_pair = "#{$1.chomp}:#{$2.chomp}"
         disks << curr_ro_pair
+      end
+    end
+    disks.uniq
+  end
+
+  def rw_snap_disks
+    disks = []
+    f = File.open('/etc/snapshots.conf', 'r')
+    f.each_line do |line|
+      if /disk:(#{@source}_vg.+_.*):(#{@package}_vg.+_.*)/ =~ line
+        curr_rw_pair = "#{$2.chomp}"
+        disks << curr_rw_pair
       end
     end
     disks.uniq
